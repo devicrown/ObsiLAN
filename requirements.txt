@@ -1,0 +1,9 @@
+# requirements.txt
+
+# No pip module is required.
+# All modules used are from the Python standard library.
+# This script depends on the following external programs (to be installed via apt/gem):
+# - nmap
+# - nbtscan
+# - smbclient
+# - whatweb (gem)
