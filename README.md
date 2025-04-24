@@ -6,7 +6,7 @@ ObsiLAN is a local network scanner written in Python. It detects machines on the
 
 ## ✨ Features
 
-- 🔍 Scan de la plage IP locale avec`nmap`
+- 🔍 Scan local IP range with `nmap`
 - 🧠 NetBIOS name detection via `nbtscan`
 - 🧰 Scan services, ports and OS with `nmap -sV -O`
 - 📁 Detecting SMB shares with `smbclient`
