@@ -20,6 +20,7 @@ ObsiLAN is a local network scanner written in Python. It detects machines on the
 ---
 
 ## 📁 Generated tree structure
+```
 scans/ 
 └── scan_0/ 
 ├── Network.md 
@@ -32,7 +33,7 @@ scans/
 │ └── SMB 192.168.1.1.md 
 └── Rapport WHATWEB/ 
 └── WHATWEB 192.168.1.1.md
-
+```
 Each machine has :
 - Smmary file (fichier Markdown)
 - A link to his raw reports
