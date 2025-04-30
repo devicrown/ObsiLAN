@@ -13,6 +13,7 @@ import os
 import ipaddress
 import subprocess
 import re
+import platform
 
 YELLOW = "\033[33m"
 NORMAL = "\033[0m"
@@ -65,42 +66,63 @@ class Machine:
 ##################
 def get_interface_ip_netmask(interface: str):
     """ Retrieve IP address and net mask """
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-    def get_ip():
-        # Use ioctl
-        return socket.inet_ntoa(fcntl.ioctl(
-            sock.fileno(),
-            0x8915,  # SIOCGIFADDR
-            struct.pack('256s', interface.encode('utf-8'))
-        )[20:24])
-
-    def get_netmask():
-        # Use ioctl
-        return socket.inet_ntoa(fcntl.ioctl(
-            sock.fileno(),
-            0x891b,  # SIOCGIFNETMASK
-            struct.pack('256s', interface.encode('utf-8'))
-        )[20:24])
-
-    return get_ip(), get_netmask()
+    try:
+        if platform.system() == "Darwin":
+            output = subprocess.getoutput(f"ifconfig {interface}")
+            ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', output)
+            mask_match = re.search(r'netmask 0x([0-9a-f]+)', output)
+            if ip_match and mask_match:
+                ip = ip_match.group(1)
+                mask_hex = int(mask_match.group(1), 16)
+                mask = socket.inet_ntoa(mask_hex.to_bytes(4, 'big'))
+                return ip, mask
+        else:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            ip = socket.inet_ntoa(fcntl.ioctl(
+                sock.fileno(),
+                0x8915,  # SIOCGIFADDR
+                struct.pack('256s', interface.encode('utf-8'))
+            )[20:24])
+            netmask = socket.inet_ntoa(fcntl.ioctl(
+                sock.fileno(),
+                0x891b,  # SIOCGIFNETMASK
+                struct.pack('256s', interface.encode('utf-8'))
+            )[20:24])
+            return ip, netmask
+    except Exception as e:
+        print(f"{RED}[NETMASK] [ERROR] {e}")
+        return None, None
 
 def get_network_range(interface='eth0'):
     """ return CIDR """
-    try:
-        ip, netmask = get_interface_ip_netmask(interface)
-        network = ipaddress.IPv4Network(f"{ip}/{netmask}", strict=False)
-        return str(network)
-    except Exception as e:
-        return f"Erreur : {e}"
+    ip, netmask = get_interface_ip_netmask(interface)
+    if ip and netmask:
+        try:
+            network = ipaddress.IPv4Network(f"{ip}/{netmask}", strict=False)
+            return str(network)
+        except Exception as e:
+            print(f"{RED}[CIDR] [ERROR] {e}")
+    return None
 
 def get_active_interface():
     """ Net Interface """
-    interfaces = os.listdir('/sys/class/net/')
-    for iface in interfaces:
-        if iface != 'lo':  # Ignoreloopback 
-            return iface
-    return 'eth0'
+    try:
+        if platform.system() == "Darwin":  # macOS
+            output = subprocess.getoutput("route get default | grep interface")
+            match = re.search(r'interface: (\w+)', output)
+            if match:
+                return match.group(1)
+            else:
+                return "en0"  # défaut pour mac
+        else:  # Linux
+            interfaces = os.listdir('/sys/class/net/')
+            for iface in interfaces:
+                if iface != 'lo':
+                    return iface
+            return 'eth0'  # défaut Linux
+    except Exception as e:
+        print(f"{RED}[INTERFACE] [ERROR] {e}")
+        return 'eth0'
 
 ##########
 ## NMAP ##
@@ -277,12 +299,14 @@ def get_next_scan_directory(base_dir="scans"):
 
 try:
     # If sudo
-    if os.geteuid() != 0:
-        print("This script must be run with administrator rights (sudo)")
-        sys.exit(1)
+  #  if os.geteuid() != 0:
+     #   print("This script must be run with administrator rights (sudo)")
+     #   sys.exit(1)
+    print(f"{YELLOW}[DEBUG] PATH utilisé : {os.environ.get('PATH')}{NORMAL}")
+    print(f"{YELLOW}[DEBUG] whereis whatweb : {shutil.which('whatweb')}{NORMAL}")
 
     # Requirements
-    tools = ["nmap", "netdiscover", "nbtscan", "smbclient", "whatweb"]
+    tools = ["nmap", "nbtscan", "smbclient", "whatweb"]
     for tool in tools:
         path = shutil.which(tool)
         if not path:
