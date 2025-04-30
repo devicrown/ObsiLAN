@@ -63,4 +63,30 @@ cd ObsiLAN
 
 sudo python3 obsilanscan.py
 ```
+
+## 🍎 macOS installation
+On macOS, the same tools must be installed but the method differs slightly.
+```bash
+brew install nmap smbclient
+```
+🧠 Install nbtscan manually (not available via brew)
+```bash
+git clone https://github.com/resurrecting-open-source-projects/nbtscan.git
+cd nbtscan
+make
+sudo cp nbtscan /usr/local/bin/nbtscan
+```
+🌐 Install whatweb manually
+```bash
+git clone https://github.com/urbanadventurer/WhatWeb.git
+cd WhatWeb
+sudo cp whatweb /usr/local/bin/whatweb
+chmod +x /usr/local/bin/whatweb
+```
+If you want to run obsilanscan.py from anywhere, you can move it to your ~/bin directory (add it to your $PATH if needed):
+```bash
+mkdir -p ~/bin
+cp obsilanscan.py ~/bin/obsilan
+chmod +x ~/bin/obsilan
+```
 DeviCrown
