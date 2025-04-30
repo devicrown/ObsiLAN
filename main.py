@@ -299,9 +299,9 @@ def get_next_scan_directory(base_dir="scans"):
 
 try:
     # If sudo
-  #  if os.geteuid() != 0:
-     #   print("This script must be run with administrator rights (sudo)")
-     #   sys.exit(1)
+    if os.geteuid() != 0:
+        print("This script must be run with administrator rights (sudo)")
+        sys.exit(1)
     print(f"{YELLOW}[DEBUG] PATH utilisé : {os.environ.get('PATH')}{NORMAL}")
     print(f"{YELLOW}[DEBUG] whereis whatweb : {shutil.which('whatweb')}{NORMAL}")
 
